@@ -7,3 +7,9 @@
 @import 'base';
 @import 'blocks';
 @import 'utilities';
+.albums{
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}

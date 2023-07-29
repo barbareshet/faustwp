@@ -9,9 +9,14 @@ import {
   NavigationMenu,
   Hero,
   SEO,
+  FeaturedImage
 } from '../components';
+import Image from "next/image";
+import AlbumCard from "@/components/SiteComponents/AlbumCard";
+import Link from "next/link";
+import React from "react";
 
-export default function Component() {
+export default function Component(props) {
   const { data } = useQuery(Component.query, {
     variables: Component.variables(),
   });
@@ -20,21 +25,44 @@ export default function Component() {
     data?.generalSettings;
   const primaryMenu = data?.headerMenuItems?.nodes ?? [];
   const footerMenu = data?.footerMenuItems?.nodes ?? [];
-
+  const { title, content, featuredImage, frontpageField } = props?.data?.page ?? { title: '' };
+  const { page } = props?.data ?? { page: '' };
+  console.log(page.frontpageFields.featuredAlbums)
   return (
     <>
-      <SEO title={siteTitle} description={siteDescription} />
+      <SEO title={page.title ? page.title : siteTitle} description={siteDescription} />
       <Header
-        title={siteTitle}
+        title={page.title ? page.title : siteTitle}
         description={siteDescription}
         menuItems={primaryMenu}
       />
       <Main>
         <Container>
-          <Hero title={'Front Page'} />
+          <Hero title={page.title} />
+          <div className="featured-image-wrap">
+              <Image src={featuredImage?.node?.sourceUrl} width={featuredImage?.node?.mediaDetails?.width} height={featuredImage?.node?.mediaDetails?.height}/>
+          </div>
           <div className="text-center">
-            <p>This page is utilizing the "front-page" WordPress template.</p>
+            <div dangerouslySetInnerHTML={{__html:page.content}}/>
             <code>wp-templates/front-page.js</code>
+          </div>
+          <div className="featured-albums">
+            <h2 className="title">
+              {page.frontpageFields.albumsSectionTitle}
+            </h2>
+            <ul className="gallary">
+              {
+                  page.frontpageFields.featuredAlbums &&
+                  page.frontpageFields.featuredAlbums
+                      .map((album) => (
+                          <li key={album.databaseId} className="galleryItem">
+                            <Link href={`/albums/${album.slug}`} className="album-card">
+                              <Image src={album?.albumFields?.cover?.mediaItemUrl} width={300} height={300} alt={album?.albumFields?.albumTitle}/>
+                            </Link>
+                          </li>
+                      ))
+              }
+            </ul>
           </div>
         </Container>
       </Main>
@@ -46,10 +74,33 @@ export default function Component() {
 Component.query = gql`
   ${BlogInfoFragment}
   ${NavigationMenu.fragments.entry}
+  ${FeaturedImage.fragments.entry}
   query GetPageData(
     $headerLocation: MenuLocationEnum
     $footerLocation: MenuLocationEnum
+    $asPreview: Boolean = false
   ) {
+    page(id: 2, idType: DATABASE_ID, asPreview: $asPreview) {
+      title
+      content
+      ...FeaturedImageFragment
+       frontpageFields {
+        albumsSectionTitle
+        featuredAlbums {
+          ... on Album {
+            id
+            databaseId
+            slug
+            albumFields {
+              albumTitle
+              cover {
+                mediaItemUrl
+              }
+            }
+          }
+        }
+      }
+    }
     generalSettings {
       ...BlogInfoFragment
     }
@@ -58,7 +109,7 @@ Component.query = gql`
         ...NavigationMenuItemFragment
       }
     }
-    footerMenuItems: menuItems(where: { location: $footerLocation }) {
+    footerMenuItems: menuItems(where: { location: $footerLocation }, first: 50) {
       nodes {
         ...NavigationMenuItemFragment
       }

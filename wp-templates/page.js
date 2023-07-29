@@ -51,6 +51,7 @@ export default function Component(props) {
 }
 
 Component.variables = ({ databaseId }, ctx) => {
+
   return {
     databaseId,
     headerLocation: MENUS.PRIMARY_LOCATION,

@@ -20,7 +20,7 @@ export default function NavigationMenu({ menuItems, className }) {
     return (
       <ul className={cx('menu')}>
         {items.map((item) => {
-          const { id, path, label, children, cssClasses } = item;
+          const { id, path, label, children, cssClasses, order } = item;
 
           // @TODO - Remove guard clause after ghost menu items are no longer appended to array.
           if (!item.hasOwnProperty('__typename')) {
@@ -56,6 +56,7 @@ NavigationMenu.fragments = {
       label
       parentId
       cssClasses
+      order
       menu {
         node {
           name
